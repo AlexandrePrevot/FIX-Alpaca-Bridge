@@ -11,8 +11,7 @@ class AlpacaStream:
     async def _quote_handler(self, data):
         print(data)
 
-    def start(self, symbols: list[str]):
-        self._client.subscribe_quotes(self._quote_handler, *symbols)
+    def start(self):
         self._thread = threading.Thread(target=self._client.run, daemon=True)
         self._thread.start()
 

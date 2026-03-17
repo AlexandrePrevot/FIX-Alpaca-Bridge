@@ -1,13 +1,19 @@
 """FIX Application"""
-import quickfix as fix
 import logging
 import time
-from model.logger import setup_logger
+
+import quickfix as fix
+import quickfix43 as fix43
+
 from src.dispatcher import Dispatcher
 
 __SOH__ = chr(1)
 
-setup_logger('acceptor', 'Logs/acceptor-message.log')
+logging.basicConfig(
+    filename='Logs/acceptor-message.log',
+    level=logging.INFO,
+    format='%(asctime)s %(message)s'
+)
 logfix = logging.getLogger('acceptor')
 
 class Application(fix.Application):
@@ -69,7 +75,7 @@ class Application(fix.Application):
         no_related_sym = fix.NoRelatedSym()
         message.getField(no_related_sym)
         symbols = []
-        group = fix.MarketDataRequest.NoRelatedSym()
+        group = fix43.MarketDataRequest.NoRelatedSym()
         for i in range(1, no_related_sym.getValue() + 1):
             message.getGroup(i, group)
             symbol = fix.Symbol()

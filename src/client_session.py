@@ -8,6 +8,7 @@ import quickfix44 as fix44
 class ClientSession:
 
     def __init__(self, client_id: str, session_id: fix.SessionID):
+        print("created a new client")
         self.client_id = client_id
         self.queue: queue.Queue = queue.Queue()
         self._session_id = session_id
@@ -21,7 +22,7 @@ class ClientSession:
         while True:
             data = self.queue.get()
             if data is None:
-                break
+                continue
             self._send(data)
 
     def _send(self, data):

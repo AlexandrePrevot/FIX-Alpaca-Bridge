@@ -18,6 +18,7 @@ class Dispatcher:
         self._clients: dict[str, tuple[ClientSession, set[str]]] = {}
 
         self._stream = AlpacaStream(api_key, secret_key)
+        self._stream.start()
 
     def add_client(self, client_id: str, symbols: list[str], session_id):
         with self._lock:
