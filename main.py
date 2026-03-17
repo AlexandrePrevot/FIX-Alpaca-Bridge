@@ -1,7 +1,7 @@
 import argparse
-import time
+import quickfix as fix
 
-from src.alpaca_stream import AlpacaStream
+from src.application import Application
 from src.dispatcher import Dispatcher
 
 
@@ -10,9 +10,14 @@ parser.add_argument("--PUBLIC_KEY", required=True)
 parser.add_argument("--SECRET_KEY", required=True)
 args = parser.parse_args()
 
-stream = AlpacaStream(args.PUBLIC_KEY, args.SECRET_KEY)
-stream.start(symbols=["SPY"])
+dispatcher = Dispatcher(args.PUBLIC_KEY, args.SECRET_KEY)
+app = Application(dispatcher)
 
-time.sleep(5)
+settings = fix.SessionSettings("src/application.cfg")
+store = fix.FileStoreFactory(settings)
+log = fix.FileLogFactory(settings)
+acceptor = fix.SocketAcceptor(app, store, settings, log)
 
-stream.stop()
+acceptor.start()
+app.run()
+acceptor.stop()

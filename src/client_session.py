@@ -1,12 +1,16 @@
 import queue
 import threading
 
+import quickfix as fix
+import quickfix44 as fix44
+
 
 class ClientSession:
 
-    def __init__(self, client_id: str):
+    def __init__(self, client_id: str, session_id: fix.SessionID):
         self.client_id = client_id
         self.queue: queue.Queue = queue.Queue()
+        self._session_id = session_id
 
         # one consumer = one thread
         # might not scale
@@ -18,7 +22,25 @@ class ClientSession:
             data = self.queue.get()
             if data is None:
                 break
-            print(f"[{self.client_id}] {data}")
+            self._send(data)
+
+    def _send(self, data):
+        message = fix44.MarketDataSnapshotFullRefresh()
+        message.setField(fix.Symbol(data.symbol))
+
+        group = fix44.MarketDataSnapshotFullRefresh.NoMDEntries()
+
+        group.setField(fix.MDEntryType(fix.MDEntryType_BID))
+        group.setField(fix.MDEntryPx(data.bid_price))
+        group.setField(fix.MDEntrySize(data.bid_size))
+        message.addGroup(group)
+
+        group.setField(fix.MDEntryType(fix.MDEntryType_OFFER))
+        group.setField(fix.MDEntryPx(data.ask_price))
+        group.setField(fix.MDEntrySize(data.ask_size))
+        message.addGroup(group)
+
+        fix.Session.sendToTarget(message, self._session_id)
 
     def stop(self):
         self.queue.put(None)

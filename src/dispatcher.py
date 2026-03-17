@@ -19,12 +19,12 @@ class Dispatcher:
 
         self._stream = AlpacaStream(api_key, secret_key)
 
-    def add_client(self, client_id: str, symbols: list[str]):
+    def add_client(self, client_id: str, symbols: list[str], session_id):
         with self._lock:
             if client_id in self._clients:
                 raise ValueError(f"Client '{client_id}' is already registered")
 
-            session = ClientSession(client_id)
+            session = ClientSession(client_id, session_id)
             new_symbols = set(symbols)
             self._clients[client_id] = (session, new_symbols)
 

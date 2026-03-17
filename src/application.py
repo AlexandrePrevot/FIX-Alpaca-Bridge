@@ -33,7 +33,7 @@ class Application(fix.Application):
     def onLogout(self, sessionID):
         """onLogout"""
         logfix.info("Session (%s) logout !" % sessionID.toString())
-        return
+        self._dispatcher.remove_client(sessionID.toString())
 
     def toAdmin(self, message, sessionID):
         msg = message.toString().replace(__SOH__, "|")
@@ -81,7 +81,7 @@ class Application(fix.Application):
 
         if sub_type == fix.SubscriptionRequestType_SNAPSHOT_PLUS_UPDATES:
             try:
-                self._dispatcher.add_client(client_id, symbols)
+                self._dispatcher.add_client(client_id, symbols, sessionID)
             except ValueError:
                 self._dispatcher.add_symbols(client_id, symbols)
         elif sub_type == fix.SubscriptionRequestType_DISABLE_PREVIOUS_SNAPSHOT_PLUS_UPDATE_REQUEST:
