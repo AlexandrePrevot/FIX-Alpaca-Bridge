@@ -1,16 +1,20 @@
 import threading
 from collections import defaultdict
+from typing import Callable, Awaitable
 
 from src.alpaca_stream import AlpacaStream
+from src.alpaca_trade_stream import AlpacaTradeStream
+from src.alpaca_trader import AlpacaTrader
 from src.client_session import ClientSession
 
 
 class Dispatcher:
 
-    def __init__(self, api_key: str, secret_key: str):
+    def __init__(self, api_key: str, secret_key: str, on_trade_update: Callable[..., Awaitable]):
         self._api_key = api_key
         self._secret_key = secret_key
         self._lock = threading.Lock()
+        self._trader = AlpacaTrader(api_key, secret_key)
 
         # symbol -> set of client_ids
         self._symbol_clients: dict[str, set[str]] = defaultdict(set)
@@ -19,6 +23,9 @@ class Dispatcher:
 
         self._stream = AlpacaStream(api_key, secret_key)
         self._stream.start()
+
+        self._trade_stream = AlpacaTradeStream(api_key, secret_key, on_trade_update)
+        self._trade_stream.start()
 
     def add_client(self, client_id: str, symbols: list[str], session_id):
         with self._lock:
@@ -70,6 +77,18 @@ class Dispatcher:
 
         if to_subscribe:
             self._stream._client.subscribe_quotes(self._dispatch, *to_subscribe)
+
+    def place_order(self, symbol, qty, side, order_type, time_in_force, client_order_id, limit_price=None, stop_price=None):
+        return self._trader.submit_order(
+            symbol=symbol,
+            qty=qty,
+            side=side,
+            order_type=order_type,
+            time_in_force=time_in_force,
+            client_order_id=client_order_id,
+            limit_price=limit_price,
+            stop_price=stop_price,
+        )
 
     async def _dispatch(self, data):
         symbol = data.symbol
